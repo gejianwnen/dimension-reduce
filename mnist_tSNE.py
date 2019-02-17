@@ -11,60 +11,47 @@ X = digits.data
 y = digits.target
 n_samples, n_features = X.shape
 n_neighbors = 30
-## Function to Scale and visualize the embedding vectors
-defplot_embedding(X, title=None):
-x_min, x_max = np.min(X, 0), np.max(X, 0)
-    X = (X - x_min) / (x_max - x_min)     
-plt.figure()
-    ax = plt.subplot(111)
-    fori in range(X.shape[0]):
-        plt.text(X[i, 0], X[i, 1], str(digits.target[i]),
-                 color=plt.cm.Set1(y[i] / 10.),
-fontdict={'weight': 'bold', 'size': 9})
-    ifhasattr(offsetbox, 'AnnotationBbox'):
-        ## only print thumbnails with matplotlib> 1.0
-        shown_images = np.array([[1., 1.]])  # just something big
-fori in range(digits.data.shape[0]):
-            dist = np.sum((X[i] - shown_images) ** 2, 1)
-            if np.min(dist) < 4e-3:
-                ## don't show points that are too close
-                continue
-            shown_images = np.r_[shown_images, [X[i]]]
-            imagebox = offsetbox.AnnotationBbox(
-                offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r),
-                X[i])
-ax.add_artist(imagebox)
-plt.xticks([]), plt.yticks([])
-    if title is not None:
-plt.title(title)
 
-#----------------------------------------------------------------------
-## Plot images of the digits
-n_img_per_row = 20
-img = np.zeros((10 * n_img_per_row, 10 * n_img_per_row))
-for i in range(n_img_per_row):
+'''显示原始数据'''
+n = 20  # 每行20个数字，每列20个数字
+img = np.zeros((10 * n, 10 * n))
+for i in range(n):
     ix = 10 * i + 1
-    for j in range(n_img_per_row):
-iy = 10 * j + 1
-img[ix:ix + 8, iy:iy + 8] = X[i * n_img_per_row + j].reshape((8, 8))
+    for j in range(n):
+        iy = 10 * j + 1
+        img[ix:ix + 8, iy:iy + 8] = X[i * n + j].reshape((8, 8))
+plt.figure(figsize=(10, 10))
 plt.imshow(img, cmap=plt.cm.binary)
 plt.xticks([])
 plt.yticks([])
-plt.title('A selection from the 64-dimensional digits dataset')
-## Computing PCA
-print("Computing PCA projection")
-t0 = time()
-X_pca = decomposition.TruncatedSVD(n_components=2).fit_transform(X)
-plot_embedding(X_pca,
-               "Principal Components projection of the digits (time %.2fs)" %
-               (time() - t0))
-## Computing t-SNE
-print("Computing t-SNE embedding")
-tsne = manifold.TSNE(n_components=2, init='pca', random_state=0)
-t0 = time()
-X_tsne = tsne.fit_transform(X)
-plot_embedding(X_tsne,
-               "t-SNE embedding of the digits (time %.2fs)" %
-               (time() - t0))
 plt.show()
 
+'''t-SNE'''
+tsne = manifold.TSNE(n_components=2, init='pca', random_state=501)
+X_tsne = tsne.fit_transform(X)
+
+print("Org data dimension is {}.Embedded data dimension is {}".format(X.shape[-1], X_tsne.shape[-1]))
+
+'''嵌入空间可视化'''
+x_min, x_max = X_tsne.min(0), X_tsne.max(0)
+X_norm = (X_tsne - x_min) / (x_max - x_min)  # 归一化
+plt.figure(figsize=(8, 8))
+for i in range(X_norm.shape[0]):
+    plt.text(X_norm[i, 0], X_norm[i, 1], str(y[i]), color=plt.cm.Set1(y[i]), 
+             fontdict={'weight': 'bold', 'size': 9})
+plt.xticks([])
+plt.yticks([])
+plt.show()
+
+X_pca = decomposition.TruncatedSVD(n_components=2).fit_transform(X)
+
+'''嵌入空间可视化'''
+x_min, x_max = X_pca.min(0), X_pca.max(0)
+X_norm = (X_pca - x_min) / (x_max - x_min)  # 归一化
+plt.figure(figsize=(8, 8))
+for i in range(X_norm.shape[0]):
+    plt.text(X_norm[i, 0], X_norm[i, 1], str(y[i]), color=plt.cm.Set1(y[i]), 
+             fontdict={'weight': 'bold', 'size': 9})
+plt.xticks([])
+plt.yticks([])
+plt.show()
